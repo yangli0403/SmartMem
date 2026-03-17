@@ -6,7 +6,7 @@
  * - 'hybrid': 使用 BM25 + 向量检索 + 可选的 Reflect 综合推理
  */
 
-import MiniSearch from 'mini-search';
+import MiniSearch from 'minisearch';
 import {
   searchMemories,
   getAllMemories,
@@ -147,7 +147,7 @@ async function bm25Search(
 
   // 执行搜索
   const searchResults = miniSearch.search(query);
-  const resultIds = new Set(searchResults.slice(0, topK).map(r => r.id));
+  const resultIds = new Set(searchResults.slice(0, topK).map((r: any) => r.id));
 
   return allMemories.filter(m => resultIds.has(m.id));
 }
