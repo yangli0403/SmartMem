@@ -1,0 +1,40 @@
+graph TD
+    subgraph "外部交互 (API Layer)"
+        A[SmartAgent3] --> B{SmartMem API Server};
+        B --> C[GET /context];
+        B --> D[POST /memory];
+        B --> E[POST /consolidate];
+    end
+
+    subgraph "核心服务 (Core Services)"
+        C --> F(Retrieval Orchestrator);
+        D --> G(Write/Update Service);
+        E --> H(Consolidation Service);
+    end
+
+    subgraph "检索策略 (Retrieval Strategies)"
+        F -- MEMORY_RETRIEVAL_STRATEGY=simple --> I[Simple Retriever - SQL LIKE];
+        F -- MEMORY_RETRIEVAL_STRATEGY=hybrid --> J(Hybrid Retriever);
+        J --> K[BM25 Retriever - mini-search];
+        J --> L[Vector Retriever - transformers.js];
+        J --> M(Reflect Service);
+    end
+
+    subgraph "后台任务 (Background Services)"
+        H -- LLM驱动 --> N(DAL);
+        O(Forgetting Service) -- 动态衰减 --> N;
+    end
+
+    subgraph "数据与存储 (Data & Storage)"
+        I --> N;
+        K --> N;
+        L --> N;
+        M -- LLM驱动 --> N;
+        G -- 生成嵌入 --> N[Data Access Layer - Drizzle ORM];
+        N <--> P[Database - MySQL/TiDB];
+    end
+
+    style A fill:#D6EAF8,stroke:#333,stroke-width:2px
+    style B fill:#D5F5E3,stroke:#333,stroke-width:2px
+    style F fill:#FCF3CF,stroke:#333,stroke-width:2px
+    style J fill:#FADBD8,stroke:#333,stroke-width:2px
