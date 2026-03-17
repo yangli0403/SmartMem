@@ -12,6 +12,7 @@ import {
   getAllMemories,
   Memory,
 } from '../data/dal';
+import { isReflectEnabled, reflectOnMemories } from '../services/reflectService';
 
 // ============================================================
 // 公共接口
@@ -64,7 +65,14 @@ async function simpleRetrieval(
 // ============================================================
 
 /**
- * 混合检索：BM25 + 向量检索，合并去重后返回
+ * 混合检索：BM25 + 向量检索，合并去重后可选 Reflect 综合推理
+ *
+ * 流程：
+ * 1. 获取用户所有有效记忆
+ * 2. 并行执行 BM25 和向量检索
+ * 3. 合并去重
+ * 4. 如果 Reflect 已启用，调用 LLM 进行综合推理
+ * 5. 否则直接格式化输出
  */
 async function hybridRetrieval(
   userId: number,
@@ -92,6 +100,17 @@ async function hybridRetrieval(
 
   // 4. 按重要性排序
   mergedResults.sort((a, b) => b.importance - a.importance);
+
+  // 5. 如果 Reflect 已启用，调用 LLM 进行综合推理
+  if (isReflectEnabled()) {
+    console.log('[SmartMem] Reflect 综合推理已启用，调用 LLM...');
+    const reflectedContext = await reflectOnMemories(query, mergedResults);
+    if (reflectedContext && reflectedContext.length > 0) {
+      return reflectedContext;
+    }
+    // 如果 Reflect 返回空结果，降级为直接格式化
+    console.log('[SmartMem] Reflect 返回空结果，降级为直接格式化');
+  }
 
   return formatMemoriesForContext(mergedResults, maxLength);
 }
